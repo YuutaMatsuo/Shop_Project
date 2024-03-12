@@ -2,7 +2,8 @@ package servlet;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -22,24 +23,45 @@ public class SessionServlet extends HttpServlet {
 
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
+		// 価格を設定
+		Map<String,Integer> priceMap = new HashMap<>();
+		priceMap.put("モンスターボール", 200);
+		priceMap.put("スーパーボール", 600);
+		priceMap.put("ハイパーボール", 1200);
 
 		// セッションスコープの生成(初回)、取得(2回目以降)
 		// 引数を「false」にすると、初回実行時の場合セッションスコープを生成しない
 		HttpSession session = request.getSession(true);
 
 		// セッションスコープからcart(買い物かごに入れているアイテムのリスト)を取得(初回はnullが返ってくる)
-		ArrayList<String> itemList = (ArrayList<String>) session.getAttribute("cart");
-
-		if (itemList == null) {
-			itemList = new ArrayList<String>(); //初回アクセス時のみ
+//		ArrayList<String> itemList = (ArrayList<String>) session.getAttribute("cart");
+		HashMap<String,Integer> itemMap = (HashMap<String,Integer>) session.getAttribute("cart");
+		Integer count;
+		
+//		if (itemList == null) {
+//			itemList = new ArrayList<String>(); //初回アクセス時のみ
+//		} else {
+//			request.setCharacterEncoding("UTF-8");
+//			String item = request.getParameter("item");
+//			itemList.add(item);
+//		}
+		
+		// カートに追加する処理
+		if (itemMap == null) {
+			itemMap = new HashMap<String,Integer>(); //初回アクセス時のみ
 		} else {
 			request.setCharacterEncoding("UTF-8");
 			String item = request.getParameter("item");
-			itemList.add(item);
+			count = itemMap.get(item);
+			if (count == null) {
+	            itemMap.put(item, 1);
+	        } else {
+	        	itemMap.put(item, count + 1);
+	        }
 		}
 		
 	// セッションスコープに買い物リストを格納
-		session.setAttribute("cart", itemList);
+		session.setAttribute("cart", itemMap);
 		
 		response.setContentType("text/html;charset=UTF-8");
 		PrintWriter out = response.getWriter();
@@ -64,13 +86,26 @@ public class SessionServlet extends HttpServlet {
 		out.println("<option value=\"ハイパーボール\">ハイパーボール</option>");
 		out.println("</select>");
 		out.println("<input type=\"submit\" value=\"追加\">");
-		out.println("");
-		out.println("");
-		out.println("");
-		out.println("");
-		out.println("");
-		out.println("");
-		out.println("");
+		out.println("</form>");
+		out.println("<h2>カートの中身</h2>");
+		
+//		// カートの中身を表示する
+//		for(int i = 0; i < itemList.size() ;i++) {
+//			if(itemList.get(i) != null) {
+//				out.println(itemList.get(i) + "<br>");
+//			}
+//		}
+		
+		// カートの中身を表示する
+		for(Map.Entry<String, Integer> entry : itemMap.entrySet()) {
+			if(entry.getKey() != null) {
+				out.println(entry.getKey() + ": " + entry.getValue() + "個<br>");				
+			}
+		}
+		
+		out.println("<br>");
+		out.println("<form action=\"/Shop_Project/purchase.jsp\" method=\"post\">");
+		out.println("<input type=\"submit\" value=\"購入\">");
 		out.println("</form>");
 		out.println("</body>");
 		out.println("</html>");
